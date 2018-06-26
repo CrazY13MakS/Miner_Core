@@ -14,11 +14,11 @@ namespace Miner_Model
         bool _flag;
         int _bombsAround;
 
-        public Point Location { get => _location; private set => _location = value; }
-        public bool Bomb { get => _bomb; private set => _bomb = value; }
-        public bool IsOpen { get => _isOpen; private set => _isOpen = value; }
+        public Point Location { get => _location;  set => _location = value; }
+        public bool Bomb { get => _bomb;  set => _bomb = value; }
+        public bool IsOpen { get => _isOpen;  set => _isOpen = value; }
         public bool Flag { get => _flag; set => _flag = value; }
-        public int BombsAround { get => _bombsAround; private set => _bombsAround = value; }
+        public int BombsAround { get => _bombsAround;  set => SetBombsAround(value); }
 
         /// <summary>
         /// Create cell instance
@@ -28,18 +28,22 @@ namespace Miner_Model
         /// <param name="bombsAround">Bombs around current cell</param>
         public Cell(Point location, bool bomb=false, int bombsAround = 0)
         {
+            if(bombsAround<0)
+            {
+                throw new ArgumentException($"Number of bombs arount the cell must be greater or equal 0. Current value: {bombsAround}");
+            }
             Location = location;
             Bomb = bomb;
             BombsAround = bombsAround;
         }
 
-        public void SetBombsAround(int value)
+        private void SetBombsAround(int value)
         {
             if (value < 0)
             {
                 throw new Exception($"BombsAround must be >=0. Current value: {value}");
             }
-            BombsAround = value;
+            _bombsAround = value;
         }
 
 

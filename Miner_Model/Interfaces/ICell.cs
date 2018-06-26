@@ -11,15 +11,15 @@ namespace Miner_Model.Interfaces
         /// <summary>
         /// Location of current cell on the field
         /// </summary>
-        Point Location { get; }
+        Point Location { get; set; }
         /// <summary>
         /// Has current cell bomb
         /// </summary>
-        bool Bomb { get; }
+        bool Bomb { get; set; }
         /// <summary>
         /// Is the cell already open
         /// </summary>
-        bool IsOpen { get; }
+        bool IsOpen { get; set; }
         /// <summary>
         /// Has current cell flag
         /// </summary>
@@ -27,15 +27,15 @@ namespace Miner_Model.Interfaces
         /// <summary>
         /// Bombs around current cell
         /// </summary>
-        int BombsAround { get; }
+        int BombsAround { get; set; }
         /// <summary>
         /// Reset all all properties except Location
         /// </summary>
         void Reset();
-        /// <summary>
-        /// Set bombs around current cell
-        /// </summary>
-        /// <param name="value">Bombs count</param>
-        void SetBombsAround(int value);
+       // /// <summary>
+       // /// Set bombs around current cell
+       // /// </summary>
+       // /// <param name="value">Bombs count</param>
+       // void SetBombsAround(int value);
     }
 }

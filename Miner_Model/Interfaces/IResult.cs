@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Miner_Model.Interfaces
 {
-    interface IResult
+  public  interface IResult
     {
         DateTime Start { get; set; }
         DateTime End { get; set; }
