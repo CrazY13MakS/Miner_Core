@@ -11,15 +11,17 @@ namespace Miner_Model
     /// Miner game
     /// </summary>
     public class Miner<TResult, TCell> where TResult : IResult, new()
-                                       where TCell : ICell
+                                       where TCell : ICell, new()
     {
-        TResult _resultl;
+        TResult _result;
         TCell _cell;
         private bool _isFirstStep;
+        private bool _isGameStarted;
         private bool _isGameOver;
+        
 
-        public List<List<ICell>> Field { get; set; }
-        public List<ICell> Cells { get; set; }
+        //  public List<List<TCell>> Field { get; set; }
+        public List<TCell> Cells { get; set; }
 
         private IDifficult _difficult;
         public IDifficult Difficult
@@ -34,7 +36,7 @@ namespace Miner_Model
 
         public event EventHandler GameOver;
 
-        public IResult LastResult { get; private set; }
+        public TResult LastResult { get; private set; }
         public Miner(IDifficult difficult)
         {
             // ValidateDifficult(difficult);
@@ -144,15 +146,16 @@ namespace Miner_Model
             //         Field[i].Add(new Cell(new Point(i,j)));
             //     }
             // }      
-            Cells = new List<ICell>(Difficult.Height * Difficult.Width);
+            Cells = new List<TCell>(Difficult.Height * Difficult.Width);
             for (int i = 0; i < Difficult.Height; i++)
             {
                 for (int j = 0; j < Difficult.Width; j++)
                 {
-                    Cells.Add(new Cell(new Point(j, i)));
+                    TCell cell = Activator.CreateInstance<TCell>() ;
+                    cell.Location = new Point(j, i);
+                    Cells.Add(cell);
                 }
             }
-
         }
 
         /// <summary>
@@ -208,6 +211,7 @@ namespace Miner_Model
         public virtual void Restart()
         {
             Cells.ForEach(ResetCellForRestart);
+            _isGameStarted = false;
             _isGameOver = false;
 
         }
@@ -215,7 +219,7 @@ namespace Miner_Model
         /// Close and remove flag
         /// </summary>
         /// <param name="cell">Cell to reset</param>
-        private void ResetCellForRestart(ICell cell)
+        private void ResetCellForRestart(TCell cell)
         {
             cell.Flag = false;
             cell.IsOpen = false;
@@ -228,6 +232,7 @@ namespace Miner_Model
         {
             Cells.ForEach(x => x.Reset());
             _isFirstStep = true;
+            _isGameStarted = false;
             _isGameOver = false;
         }
 
@@ -259,14 +264,31 @@ namespace Miner_Model
             }
             if (_isFirstStep)
             {
-                InitGame(point);
+                InitGame(point);             
+            }
+            if(!_isGameStarted)
+            {
+                _result = Activator.CreateInstance<TResult>();
+                _result.Start = DateTimeOffset.Now;
+                _result.Difficult = Difficult;
             }
             var cell = Cells.FirstOrDefault(x => x.Location == point);
+            if(cell.IsOpen||cell.Flag)// If cell is already open either there is a flag
+            {
+                return;
+            }
             cell.IsOpen = true;
             if (cell.Bomb)
             {
                 _isGameOver = true;
-                //TODO: Result, change cell constructor LastResult
+                _result.End = DateTimeOffset.Now;
+                _result.Win = false;
+                _result.BombsLeft = Cells.Count(x => x.Bomb && !x.IsOpen) + 1;//1 - last cell is already open
+                LastResult = _result;
+            }
+            if(cell.BombsAround>0)
+            {
+                //TODO: Recursive open cells
             }
         }
     }

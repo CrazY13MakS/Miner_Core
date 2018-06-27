@@ -6,10 +6,10 @@ namespace Miner_Model.Interfaces
 {
   public  interface IResult
     {
-        DateTime Start { get; set; }
-        DateTime End { get; set; }
+        DateTimeOffset Start { get; set; }
+        DateTimeOffset End { get; set; }
         IDifficult Difficult { get; set; }
-        bool Win { get; }
-        int BombsLeft { get; }
+        bool Win { get; set; }
+        int BombsLeft { get; set; }
     }
 }
