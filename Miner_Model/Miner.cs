@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Miner_Model
 {
@@ -13,35 +14,77 @@ namespace Miner_Model
     public class Miner<TResult, TCell> where TResult : IResult, new()
                                        where TCell : ICell, new()
     {
+        #region Fields
+        /// <summary>
+        /// Intermediate result
+        /// </summary>
         TResult _result;
-        TCell _cell;
+        // TCell _cell;
+
+
+        /// <summary>
+        /// If false - Init field
+        /// </summary>
         private bool _isFirstStep;
+        /// <summary>
+        /// If false - create Tresult and set Time and Difficult
+        /// </summary>
         private bool _isGameStarted;
+        /// <summary>
+        /// Show game over or not
+        /// </summary>
         private bool _isGameOver;
-        
+
+        private Queue<TCell> _cellsForOpening;
+        #endregion
+
 
         //  public List<List<TCell>> Field { get; set; }
-        public List<TCell> Cells { get; set; }
+        public List<TCell> Cells { get; protected set; }
 
         private IDifficult _difficult;
+
+        /// <summary>
+        /// Describe current difficult 
+        /// </summary>
         public IDifficult Difficult
         {
             get { return _difficult; }
-            private set
+            protected set
             {
                 ValidateDifficult(value);
                 _difficult = value;
+                NewGame();
             }
         }
-
+        /// <summary>
+        /// Invoke when current game is over. Win or luse
+        /// </summary>
         public event EventHandler GameOver;
 
-        public TResult LastResult { get; private set; }
-        public Miner(IDifficult difficult)
+        public TResult LastResult { get; protected set; }
+
+        /// <summary>
+        /// Create instance with difficult
+        /// </summary>
+        /// <param name="difficult">Difficult to set</param>
+        public Miner(IDifficult difficult) : this()
         {
             // ValidateDifficult(difficult);
             Difficult = difficult;
             CreateField();
+        }
+
+        /// <summary>
+        /// Initialize all fields
+        /// </summary>
+        internal Miner()
+        {
+            _cellsForOpening = new Queue<TCell>();
+            Cells = new List<TCell>();
+            _isFirstStep = true;
+            _isGameOver = false;
+            _isGameStarted = false;
         }
 
         /// <summary>
@@ -137,21 +180,20 @@ namespace Miner_Model
         /// </summary>
         protected void CreateField()
         {
-            // Field = new List<List<ICell>>(Difficult.Height);
-            // for (int i = 0; i < Difficult.Height; i++)
-            // {
-            //     Field.Add(new List<ICell>(Difficult.Width));
-            //     for (int j = 0; j < Difficult.Width; j++)
-            //     {                   
-            //         Field[i].Add(new Cell(new Point(i,j)));
-            //     }
-            // }      
-            Cells = new List<TCell>(Difficult.Height * Difficult.Width);
+            if (Cells == null)
+            {
+                Cells = new List<TCell>(Difficult.Height * Difficult.Width);
+            }
+            else
+            {
+                Cells.Clear();
+                Cells.Capacity = Difficult.Height * Difficult.Width;
+            }
             for (int i = 0; i < Difficult.Height; i++)
             {
                 for (int j = 0; j < Difficult.Width; j++)
                 {
-                    TCell cell = Activator.CreateInstance<TCell>() ;
+                    TCell cell = Activator.CreateInstance<TCell>();
                     cell.Location = new Point(j, i);
                     Cells.Add(cell);
                 }
@@ -216,12 +258,12 @@ namespace Miner_Model
 
         }
         /// <summary>
-        /// Close and remove flag
+        /// Close and remove mark
         /// </summary>
         /// <param name="cell">Cell to reset</param>
         private void ResetCellForRestart(TCell cell)
         {
-            cell.Flag = false;
+            cell.Mark =  CellMark.None;
             cell.IsOpen = false;
         }
 
@@ -247,6 +289,7 @@ namespace Miner_Model
             NewGame();
         }
 
+
         /// <summary>
         /// Open cell
         /// </summary>
@@ -264,32 +307,100 @@ namespace Miner_Model
             }
             if (_isFirstStep)
             {
-                InitGame(point);             
+                InitGame(point);
             }
-            if(!_isGameStarted)
+            if (!_isGameStarted)
             {
                 _result = Activator.CreateInstance<TResult>();
                 _result.Start = DateTimeOffset.Now;
                 _result.Difficult = Difficult;
             }
             var cell = Cells.FirstOrDefault(x => x.Location == point);
-            if(cell.IsOpen||cell.Flag)// If cell is already open either there is a flag
-            {
-                return;
-            }
+            if (cell.IsOpen || cell.Mark != CellMark.None) { return; }   // If cell is already open either has mark
+
             cell.IsOpen = true;
             if (cell.Bomb)
             {
-                _isGameOver = true;
-                _result.End = DateTimeOffset.Now;
-                _result.Win = false;
-                _result.BombsLeft = Cells.Count(x => x.Bomb && !x.IsOpen) + 1;//1 - last cell is already open
-                LastResult = _result;
+                End(false);
+                return;
             }
-            if(cell.BombsAround>0)
+
+            if (IsEnd()) { return; }
+
+            if (cell.BombsAround == 0)
             {
+                var cells = Cells.Where(x => GetAroundPoints(point).Contains(x.Location) && !x.Bomb);
+                foreach (var item in cells)
+                {
+                    if (!_cellsForOpening.Contains(item))
+                    {
+                        _cellsForOpening.Enqueue(item);
+                    }
+                }
                 //TODO: Recursive open cells
             }
+            if (_cellsForOpening.Count > 0)
+            {
+                OpenCellAsync(_cellsForOpening.Dequeue());
+            }
+        }
+
+        /// <summary>
+        /// Open cell async
+        /// </summary>
+        /// <param name="cell"></param>
+        protected virtual async void OpenCellAsync(TCell cell)
+        {
+            await Task.Run(() => OpenCell(cell.Location));
+        }
+
+        /// <summary>
+        /// Return true if the user won the game
+        /// </summary>
+        /// <returns></returns>
+        protected bool IsEnd()
+        {
+            int bombsWithFlags = Cells.Count(x => x.Bomb && x.Mark == CellMark.Flag);
+            int openedCells = Cells.Count(x => x.IsOpen);
+            if (bombsWithFlags == Difficult.BombsCount
+                && openedCells == Cells.Count - Difficult.BombsCount)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// EndGame
+        /// </summary>
+        /// <param name="win">Player win the game</param>
+        private void End(bool win)
+        {
+            _isGameOver = true;
+            _result.End = DateTimeOffset.Now;
+            _result.Win = win;
+            _result.BombsLeft = Cells.Count(x => x.Bomb && !x.IsOpen) + 1;//1 - last cell with bomb is already open
+            LastResult = _result;
+            GameOver?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Set mark on cell
+        /// </summary>
+        /// <param name="location">Cell location</param>
+        /// <param name="mark">Mark to set</param>
+        public virtual void SetMark(Point location, CellMark mark)
+        {
+            if (IsPointOutsideTheField(location))
+            {
+                throw new ArgumentOutOfRangeException($"Point with coorditnates: {location} is outside the field");
+            }
+            var cell = Cells.FirstOrDefault(x => x.Location == location);
+            if (cell.IsOpen)
+            {
+                return;
+            }
+            cell.Mark = mark;
         }
     }
 }

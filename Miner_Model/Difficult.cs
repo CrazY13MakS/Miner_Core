@@ -6,7 +6,7 @@ using System.Text;
 namespace Miner_Model
 {
     /// <summary>
-    /// Describe difficult for miner game
+    /// Describe difficult for miner
     /// </summary>
     public class Difficult : IDifficult
     {
@@ -14,16 +14,27 @@ namespace Miner_Model
         int _fieldHeight;
         int _bombsCount;
         String _name;
+
+        /// <summary>
+        /// Width of the field
+        /// </summary>
         public int Width { get => _fieldWidth; private set => _fieldWidth = value; }
-
+        /// <summary>
+        /// Height of the field
+        /// </summary>
         public int Height { get => _fieldHeight; private set => _fieldHeight = value; }
-
+        /// <summary>
+        /// Number of bombs on the field
+        /// </summary>
         public int BombsCount { get => _bombsCount; private set => _bombsCount = value; }
 
+        /// <summary>
+        /// Name of the current difficult
+        /// </summary>
         public string Name { get => _name; set => _name = value; }
 
         /// <summary>
-        /// Constructor  
+        /// Create   
         /// </summary>
         /// <param name="width">Field width. Value must be >=5</param>
         /// <param name="height">Field height. Value must be >=5</param>

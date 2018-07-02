@@ -23,7 +23,7 @@ namespace Miner_Model.Interfaces
         /// <summary>
         /// Has current cell flag
         /// </summary>
-        bool Flag { get; set; }
+        CellMark Mark { get; set; }
         /// <summary>
         /// Bombs around current cell
         /// </summary>

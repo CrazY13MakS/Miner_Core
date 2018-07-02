@@ -11,13 +11,28 @@ namespace Miner_Model
         Point _location;
         bool _isOpen;
         bool _bomb;
-        bool _flag;
+        CellMark _mark;
         int _bombsAround;
 
+        /// <summary>
+        /// Describe cell location
+        /// </summary>
         public Point Location { get => _location;  set => _location = value; }
+        /// <summary>
+        /// Has current cell bomb or not
+        /// </summary>
         public bool Bomb { get => _bomb;  set => _bomb = value; }
+        /// <summary>
+        /// Is current cell already opened
+        /// </summary>
         public bool IsOpen { get => _isOpen;  set => _isOpen = value; }
-        public bool Flag { get => _flag; set => _flag = value; }
+        /// <summary>
+        /// Describe mark on cell
+        /// </summary>
+        public CellMark Mark { get => _mark; set => _mark = value; }
+        /// <summary>
+        /// Number of bombs around
+        /// </summary>
         public int BombsAround { get => _bombsAround;  set => SetBombsAround(value); }
 
         /// <summary>
@@ -37,6 +52,7 @@ namespace Miner_Model
             BombsAround = bombsAround;
         }
 
+
         private void SetBombsAround(int value)
         {
             if (value < 0)
@@ -47,12 +63,14 @@ namespace Miner_Model
         }
 
 
-
+        /// <summary>
+        /// Set all fields to default value
+        /// </summary>
         public void Reset()
         {
             Bomb = false;
             IsOpen = false;
-            Flag = false;
+            Mark =  CellMark.None;
             BombsAround = 0;
             
         }
