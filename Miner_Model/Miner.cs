@@ -193,8 +193,10 @@ namespace Miner_Model
             {
                 for (int j = 0; j < Difficult.Width; j++)
                 {
-                    TCell cell = Activator.CreateInstance<TCell>();
-                    cell.Location = new Point(j, i);
+                    TCell cell = new TCell
+                    {
+                        Location = new Point(j, i)
+                    };//Activator.CreateInstance<TCell>();
                     Cells.Add(cell);
                 }
             }
@@ -311,9 +313,11 @@ namespace Miner_Model
             }
             if (!_isGameStarted)
             {
-                _result = Activator.CreateInstance<TResult>();
-                _result.Start = DateTimeOffset.Now;
-                _result.Difficult = Difficult;
+                _result = new TResult
+                {
+                    Start = DateTimeOffset.Now,
+                    Difficult = Difficult
+                };// Activator.CreateInstance<TResult>();
             }
             var cell = Cells.FirstOrDefault(x => x.Location == point);
             if (cell.IsOpen || cell.Mark != CellMark.None) { return; }   // If cell is already open either has mark
