@@ -1,0 +1,89 @@
+﻿
+@{
+    ViewData["Title"] = "RectDemo";
+   // Layout = null;
+}
+@*
+        <h2>RectDemo</h2>
+        <div class="container" style="height:800px">
+
+        <div id="shape" />
+        </div>
+        @*<script src="~/lib/jquery/dist/jquery.js"></script>
+    <script src="~/lib/signalr/signalr.js"></script>
+    <script src="~/js/rect.js"></script>*@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>jQuery UI Draggable - Default functionality</title>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+   @* <link rel="stylesheet" href="/resources/demos/style.css">*@
+    <style>
+        #draggable {
+            width: 150px;
+            height: 150px;
+            padding: 0.5em;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="~/lib/signalr/signalr.js"></script>
+    <script>
+        $(function () {
+            //$("#draggable").draggable();
+            const connectionRect = new signalR.HubConnectionBuilder()
+                .withUrl("/moveShapeHub")
+                .build();
+
+            connectionRect.on("UpdateModel", (model) => {
+                console.log(model);
+                shapeModel = model;
+                // Gradually move the shape towards the new location (interpolate)
+                // The updateRate is used as the duration because by the time
+                // we get to the next location we want to be at the "last" location
+                // We also clear the animation queue so that we start a new
+                // animation and don't lag behind.
+                $shape.animate(shapeModel, { duration: updateRate, queue: false });
+            });
+            moved = false;
+            $shape = $("#draggable");
+            // Send a maximum of 10 messages per second
+            // (mouse movements trigger a lot of messages)
+            messageFrequency = 10;
+            // Determine how often to send messages in
+            // time to abide by the messageFrequency
+            updateRate = 1000 / messageFrequency;
+            shapeModel = {
+                left: 0,
+                top: 0
+            },
+                connectionRect.start().catch(err => console.error(err.toString()));
+            $shape.draggable({
+                drag: function () {
+                    shapeModel = $shape.offset();
+                    moved = true;
+                }
+            });
+            setInterval(updateServerModel, updateRate);
+            function updateServerModel() {
+                // Only update server if we have a new movement
+                if (moved) {
+                    connectionRect.invoke("UpdateModel", shapeModel).catch(err => console.error(err.toString()));
+                    moved = false;
+                }
+            }
+
+        });
+    </script>
+</head>
+<body>
+
+    <div id="draggable" class="ui-widget-content">
+        <p>Drag me around</p>
+    </div>
+
+
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "Miner_Core",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CrazY13MakS/Miner_Core.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CrazY13MakS/Miner_Core/issues"
+  },
+  "homepage": "https://github.com/CrazY13MakS/Miner_Core#readme",
+  "dependencies": {
+    "@aspnet/signalr": "^1.0.2"
+  }
+}
